@@ -1,0 +1,205 @@
+<!-- EV Charging Station Log Decoders -->
+<!-- Place this file in /var/ossec/etc/decoders/local_decoder.xml on Wazuh Manager -->
+
+<!-- Parent decoder for EV Charger logs -->
+<decoder name="ev-charger">
+  <program_name>^ev-charger|EVCharger|Security-EVCharge</program_name>
+</decoder>
+
+<!-- Decoder for EV Charger JSON logs -->
+<decoder name="ev-charger-json">
+  <parent>ev-charger</parent>
+  <prematch>^\S+ - \S+ - \S+ - {</prematch>
+  <regex offset="after_prematch">^(.+)$</regex>
+  <order>json_data</order>
+</decoder>
+
+<!-- Decoder for EV Charger events with JSON data -->
+<decoder name="ev-charger-event">
+  <parent>ev-charger</parent>
+  <prematch>\S+: {</prematch>
+  <regex>\S+: ({.+})</regex>
+  <order>json_data</order>
+</decoder>
+
+<!-- Decoder for security alerts -->
+<decoder name="ev-charger-security">
+  <parent>ev-charger</parent>
+  <prematch>SECURITY_ALERT:</prematch>
+  <regex>SECURITY_ALERT: ({.+})</regex>
+  <order>json_data</order>
+</decoder>
+
+<!-- Decoder for malicious traffic -->
+<decoder name="traffic-generator">
+  <program_name>^TrafficGenerator</program_name>
+</decoder>
+
+<decoder name="traffic-generator-malicious">
+  <parent>traffic-generator</parent>
+  <prematch>MALICIOUS TRAFFIC:</prematch>
+  <regex>MALICIOUS TRAFFIC: ({.+})</regex>
+  <order>json_data</order>
+</decoder>
+
+<!-- Decoder for data exfiltration events -->
+<decoder name="traffic-generator-exfil">
+  <parent>traffic-generator</parent>
+  <prematch>Data exfiltration attempt:</prematch>
+  <regex>Data exfiltration attempt: ({.+})</regex>
+  <order>json_data</order>
+</decoder>
+
+<!-- Decoder for malware beacon events -->
+<decoder name="traffic-generator-beacon">
+  <parent>traffic-generator</parent>
+  <prematch>Malware beacon detected:</prematch>
+  <regex>Malware beacon detected: ({.+})</regex>
+  <order>json_data</order>
+</decoder>
+
+<!-- Extract specific fields from JSON data -->
+<decoder name="ev-charger-fields">
+  <parent>ev-charger</parent>
+  <use_own_name>true</use_own_name>
+  <json_null_field>null</json_null_field>
+  <plugin_decoder>JSON_Decoder</plugin_decoder>
+</decoder>
+
+<!-- Specific decoders for different event types -->
+
+<!-- Charging session decoder -->
+<decoder name="ev-charger-session">
+  <parent>ev-charger</parent>
+  <prematch>Charging session</prematch>
+  <regex>Charging session (\w+): \{"event_type":"(\w+)","charger_id":"([^"]+)","session_id":"([^"]+)"</regex>
+  <order>action,event_type,charger_id,session_id</order>
+</decoder>
+
+<!-- System health decoder -->
+<decoder name="ev-charger-health">
+  <parent>ev-charger</parent>
+  <prematch>System health:</prematch>
+  <regex>System health: \{[^}]*"charger_id":"([^"]+)"[^}]*"cpu_percent":(\d+\.?\d*)[^}]*"memory_percent":(\d+\.?\d*)</regex>
+  <order>charger_id,cpu_percent,memory_percent</order>
+</decoder>
+
+<!-- Authentication failure decoder -->
+<decoder name="ev-charger-auth">
+  <parent>ev-charger</parent>
+  <prematch>Authentication failure:</prematch>
+  <regex>Authentication failure: \{[^}]*"charger_id":"([^"]+)"[^}]*"failed_attempts":(\d+)[^}]*"user_id":"([^"]+)"</regex>
+  <order>charger_id,failed_attempts,user_id</order>
+</decoder>
+
+<!-- Network status decoder -->
+<decoder name="ev-charger-network">
+  <parent>ev-charger</parent>
+  <prematch>Network status:</prematch>
+  <regex>Network status: \{[^}]*"charger_id":"([^"]+)"[^}]*"interface":"([^"]+)"[^}]*"ip_address":"([^"]+)"</regex>
+  <order>charger_id,interface,ip_address</order>
+</decoder>
+
+<!-- Heartbeat decoder -->
+<decoder name="ev-charger-heartbeat">
+  <parent>ev-charger</parent>
+  <prematch>Heartbeat:</prematch>
+  <regex>Heartbeat: \{[^}]*"charger_id":"([^"]+)"[^}]*"status":"([^"]+)"[^}]*"location":"([^"]+)"</regex>
+  <order>charger_id,status,location</order>
+</decoder>
+
+<!-- Temperature monitoring decoder -->
+<decoder name="ev-charger-temperature">
+  <parent>ev-charger</parent>
+  <prematch>temperature</prematch>
+  <regex>"ambient_temperature":(\d+\.?\d*),"internal_temperature":(\d+\.?\d*)</regex>
+  <order>ambient_temp,internal_temp</order>
+</decoder>
+
+<!-- Voltage monitoring decoder -->
+<decoder name="ev-charger-voltage">
+  <parent>ev-charger</parent>
+  <prematch>voltage</prematch>
+  <regex>"grid_voltage":(\d+\.?\d*),"grid_frequency":(\d+\.?\d*)</regex>
+  <order>grid_voltage,grid_frequency</order>
+</decoder>
+
+<!-- Energy consumption decoder -->
+<decoder name="ev-charger-energy">
+  <parent>ev-charger</parent>
+  <prematch>energy_consumed</prematch>
+  <regex>"energy_consumed_kwh":(\d+\.?\d*),"location":"([^"]+)"</regex>
+  <order>energy_kwh,location</order>
+</decoder>
+
+<!-- Payment method decoder -->
+<decoder name="ev-charger-payment">
+  <parent>ev-charger</parent>
+  <prematch>payment_method</prematch>
+  <regex>"payment_method":"([^"]+)","timestamp"</regex>
+  <order>payment_method</order>
+</decoder>
+
+<!-- IP address extraction for security events -->
+<decoder name="ev-charger-ip">
+  <parent>ev-charger</parent>
+  <prematch>source_ip</prematch>
+  <regex>"source_ip":"([^"]+)"</regex>
+  <order>src_ip</order>
+</decoder>
+
+<!-- Severity level decoder -->
+<decoder name="ev-charger-severity">
+  <parent>ev-charger</parent>
+  <prematch>severity</prematch>
+  <regex>"severity":"([^"]+)"</regex>
+  <order>severity</order>
+</decoder>
+
+<!-- Firmware version decoder -->
+<decoder name="ev-charger-firmware">
+  <parent>ev-charger</parent>
+  <prematch>firmware_version</prematch>
+  <regex>"firmware_version":"([^"]+)"</regex>
+  <order>firmware_version</order>
+</decoder>
+
+<!-- Connector type decoder -->
+<decoder name="ev-charger-connector">
+  <parent>ev-charger</parent>
+  <prematch>connector_type</prematch>
+  <regex>"connector_type":"([^"]+)"</regex>
+  <order>connector_type</order>
+</decoder>
+
+<!-- Duration decoder for sessions -->
+<decoder name="ev-charger-duration">
+  <parent>ev-charger</parent>
+  <prematch>duration_minutes</prematch>
+  <regex>"duration_minutes":(\d+)</regex>
+  <order>duration_minutes</order>
+</decoder>
+
+<!-- Traffic pattern decoder -->
+<decoder name="traffic-pattern">
+  <parent>traffic-generator</parent>
+  <prematch>traffic:</prematch>
+  <regex>traffic: \{[^}]*"pattern":"([^"]+)"[^}]*"target":"([^"]+)"[^}]*"source":"([^"]+)"</regex>
+  <order>pattern,target,source</order>
+</decoder>
+
+<!-- Network interface stats decoder -->
+<decoder name="network-stats">
+  <parent>traffic-generator</parent>
+  <prematch>packet count</prematch>
+  <regex>packet count detected: \{[^}]*"rx_packets":(\d+)[^}]*"tx_packets":(\d+)</regex>
+  <order>rx_packets,tx_packets</order>
+</decoder>
+
+<!-- Command execution decoder for active responses -->
+<decoder name="ev-charger-command">
+  <parent>ev-charger</parent>
+  <prematch>ACTIVE RESPONSE:</prematch>
+  <regex>ACTIVE RESPONSE: ([^:]+): ?(.*)$</regex>
+  <order>command,command_params</order>
+</decoder>
