@@ -1,0 +1,9 @@
+[submodule "RSyslog"]
+	path = RSyslog
+	url = https://github.com/resilmesh2/RSyslog.git
+[submodule "Decoders"]
+	path = Decoders
+	url = https://github.com/resilmesh2/Decoders.git
+[submodule "Rules"]
+	path = Rules
+	url = https://github.com/resilmesh2/Rules
